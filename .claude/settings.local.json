@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /tmp)",
+      "Bash(unzip -q \"/c/2026-1/tecnopoly/tecnopoly-backend/tecnopoly_backend.zip\")",
+      "Bash(npm install:*)",
+      "Bash(unzip -q \"C:\\\\\\\\2026-1\\\\\\\\tecnopoly\\\\\\\\tecnopoly-backend\\\\\\\\tecnopoly_backend.zip\" -d tecnopoly_backend)",
+      "Bash(ls -la /tmp/tecnopoly_backend/src/*/)"
+    ]
+  }
+}
