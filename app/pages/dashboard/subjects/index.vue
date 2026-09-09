@@ -203,7 +203,8 @@ const snackbar = useSnackbarStore()
 const router = useRouter()
 
 interface Professor { id: string; name: string; email: string }
-interface SubjectProfessor { id: string; subject_id: string; professor_id: string; professor: Professor }
+// Las asignaciones son subdocumentos de la materia: ya no traen subject_id.
+interface SubjectProfessor { id: string; professor_id: string; assigned_at?: string; professor: Professor }
 interface Grade { id: string; name: string }
 interface Subject {
   id: string

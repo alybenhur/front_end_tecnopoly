@@ -370,7 +370,12 @@ function openEdit(q: Question) {
     correct_explanation: q.correct_explanation,
     incorrect_explanation: q.incorrect_explanation,
     image_url: q.image_url ?? '',
-    answer_options: q.answer_options.map((o) => ({ ...o })),
+    // Solo los campos que acepta el DTO: la respuesta trae ademas un `id` por
+    // opcion y el backend valida con forbidNonWhitelisted (devolveria 400).
+    answer_options: q.answer_options.map((o) => ({
+      option_text: o.option_text,
+      order_index: o.order_index,
+    })),
   })
   dialog.value = true
 }
