@@ -6,6 +6,10 @@ export default defineNuxtConfig({
 
   modules: ['@pinia/nuxt'],
 
+  nitro: {
+    preset: 'node-server',
+  },
+
   build: {
     transpile: ['vuetify'],
   },
