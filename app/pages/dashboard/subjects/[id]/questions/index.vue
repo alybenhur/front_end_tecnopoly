@@ -58,6 +58,17 @@
         items-per-page-text="Filas por página"
         rounded="lg"
       >
+        <template #item.question_type="{ item }">
+          <v-img
+            v-if="item.question_type === 'image' && item.image_url"
+            :src="cloudinaryUrl(item.image_url, 'c_fill,w_96,h_64,f_auto,q_auto')"
+            width="64"
+            height="42"
+            cover
+            class="rounded"
+          />
+          <v-icon v-else color="medium-emphasis" title="Pregunta de texto">mdi-format-text</v-icon>
+        </template>
         <template #item.level="{ item }">
           <v-chip :color="levelColor(item.level)" size="small" variant="tonal">{{ levelLabel(item.level) }}</v-chip>
         </template>
@@ -80,9 +91,37 @@
         <v-card-title class="pt-5 px-6">{{ editing ? 'Editar Pregunta' : 'Nueva Pregunta' }}</v-card-title>
         <v-card-text class="px-6">
           <v-form ref="formRef">
+            <p class="text-subtitle-2 mb-2">Tipo de pregunta</p>
+            <v-btn-toggle
+              v-model="form.question_type"
+              mandatory
+              color="primary"
+              variant="outlined"
+              rounded="lg"
+              density="comfortable"
+              class="mb-4"
+            >
+              <v-btn value="text" prepend-icon="mdi-format-text">Texto</v-btn>
+              <v-btn value="image" prepend-icon="mdi-image">Imagen</v-btn>
+            </v-btn-toggle>
+
+            <template v-if="form.question_type === 'image'">
+              <p class="text-body-2 text-medium-emphasis mb-2">
+                Se muestra la imagen y el enunciado pregunta sobre ella. Las opciones siguen siendo de texto.
+              </p>
+              <QuestionImageUpload
+                v-model:public-id="form.image_public_id"
+                v-model:url="form.image_url"
+                :subject-id="subjectId"
+                @uploaded="(id) => sessionUploads.push(id)"
+              />
+              <p v-if="imageMissing" class="text-caption text-error mb-2">Sube la imagen de la pregunta</p>
+            </template>
+
             <v-textarea
               v-model="form.question_text"
-              label="Enunciado de la pregunta"
+              :label="form.question_type === 'image' ? 'Pregunta sobre la imagen' : 'Enunciado de la pregunta'"
+              :placeholder="form.question_type === 'image' ? 'Ej.: ¿Qué componente se señala en la imagen?' : ''"
               variant="outlined"
               rounded="lg"
               rows="3"
@@ -187,6 +226,7 @@
               class="mb-3"
             />
             <v-text-field
+              v-if="form.question_type === 'text'"
               v-model="form.image_url"
               label="URL de imagen (opcional)"
               variant="outlined"
@@ -196,7 +236,7 @@
         </v-card-text>
         <v-card-actions class="pb-4 pr-6">
           <v-spacer />
-          <v-btn variant="text" rounded="lg" @click="dialog = false">Cancelar</v-btn>
+          <v-btn variant="text" rounded="lg" @click="closeDialog">Cancelar</v-btn>
           <v-btn color="primary" variant="elevated" rounded="lg" :loading="saving" @click="saveQuestion">
             {{ editing ? 'Guardar' : 'Crear' }}
           </v-btn>
@@ -212,6 +252,13 @@
           Vista previa
         </v-card-title>
         <v-card-text class="px-6">
+          <v-img
+            v-if="previewQuestion.question_type === 'image' && previewQuestion.image_url"
+            :src="cloudinaryUrl(previewQuestion.image_url, 'c_limit,w_800,f_auto,q_auto')"
+            max-height="280"
+            contain
+            class="rounded-lg mb-4 bg-grey-lighten-4"
+          />
           <p class="text-body-1 font-weight-medium mb-4">{{ previewQuestion.question_text }}</p>
           <v-list density="compact" rounded="lg" bg-color="grey-lighten-4">
             <v-list-item
@@ -269,7 +316,9 @@ interface Question {
   correct_explanation: string
   incorrect_explanation: string
   answer_options: AnswerOption[]
-  image_url?: string
+  question_type?: 'text' | 'image'
+  image_url?: string | null
+  image_public_id?: string | null
 }
 
 const questions = ref<Question[]>([])
@@ -294,6 +343,8 @@ const levelOptions = [
 ]
 
 const defaultForm = () => ({
+  question_type: 'text' as 'text' | 'image',
+  image_public_id: '',
   question_text: '',
   level: '',
   reward_credits: 10,
@@ -310,7 +361,17 @@ const defaultForm = () => ({
 
 const form = reactive(defaultForm())
 
+// Imágenes subidas mientras el formulario estuvo abierto: las que no queden en la
+// pregunta guardada se descartan en Cloudinary al cerrar o guardar
+const sessionUploads = ref<string[]>([])
+const imageMissing = ref(false)
+
+/** URL de Cloudinary con una transformación (miniatura, tamaño, formato). */
+const cloudinaryUrl = (url: string, transform: string) =>
+  url.includes('/upload/') ? url.replace('/upload/', `/upload/${transform}/`) : url
+
 const headers = [
+  { title: '', key: 'question_type', sortable: false, width: 80 },
   { title: 'Pregunta', key: 'question_text', sortable: false },
   { title: 'Nivel', key: 'level', sortable: true },
   { title: 'Créditos +/-', key: 'reward_credits', sortable: false },
@@ -354,14 +415,21 @@ async function loadData() {
 
 function openCreate() {
   editing.value = false
+  selectedQuestion.value = null
   Object.assign(form, defaultForm())
+  sessionUploads.value = []
+  imageMissing.value = false
   dialog.value = true
 }
 
 function openEdit(q: Question) {
   editing.value = true
   selectedQuestion.value = q
+  sessionUploads.value = []
+  imageMissing.value = false
   Object.assign(form, {
+    question_type: q.question_type ?? 'text',
+    image_public_id: q.image_public_id ?? '',
     question_text: q.question_text,
     level: q.level,
     reward_credits: q.reward_credits,
@@ -397,12 +465,30 @@ function removeOption(index: number) {
   }
 }
 
+// Borra en Cloudinary las imágenes subidas en esta sesión que no quedaron guardadas
+function discardUnused(keep: string | null) {
+  const unused = sessionUploads.value.filter((id) => id && id !== keep)
+  sessionUploads.value = []
+  for (const id of unused) {
+    api.post(`/subjects/${subjectId.value}/questions/image-discard`, { public_id: id }).catch(() => { /* no bloquea */ })
+  }
+}
+
+function closeDialog() {
+  // Lo que quedó guardado es la imagen original de la pregunta (si se edita)
+  discardUnused(selectedQuestion.value?.image_public_id ?? null)
+  dialog.value = false
+}
+
 async function saveQuestion() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  imageMissing.value = form.question_type === 'image' && !form.image_public_id
+  if (!valid || imageMissing.value) return
   saving.value = true
   try {
+    const isImage = form.question_type === 'image'
     const payload = {
+      question_type: form.question_type,
       question_text: form.question_text,
       level: form.level,
       reward_credits: form.reward_credits,
@@ -410,7 +496,9 @@ async function saveQuestion() {
       correct_answer_index: form.correct_answer_index,
       correct_explanation: form.correct_explanation,
       incorrect_explanation: form.incorrect_explanation,
-      image_url: form.image_url || undefined,
+      // Pregunta de imagen: solo el public_id (la URL la pone el backend tras verificarla)
+      image_public_id: isImage ? form.image_public_id : undefined,
+      image_url: !isImage ? (form.image_url || undefined) : undefined,
       answer_options: form.answer_options,
     }
     if (editing.value && selectedQuestion.value) {
@@ -420,6 +508,8 @@ async function saveQuestion() {
       await api.post(`/subjects/${subjectId.value}/questions`, payload)
       snackbar.success('Pregunta creada')
     }
+    // La imagen anterior la borra el backend; aquí solo las subidas que no se usaron
+    discardUnused(isImage ? form.image_public_id : null)
     dialog.value = false
     await loadData()
   } catch (e: any) {
