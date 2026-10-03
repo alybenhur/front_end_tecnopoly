@@ -10,6 +10,9 @@
         <p class="text-medium-emphasis text-body-2 mt-1">Banco de preguntas de la materia</p>
       </div>
       <v-spacer />
+      <v-btn variant="tonal" color="primary" prepend-icon="mdi-shape-outline" rounded="lg" class="mr-2" @click="categoryDialog = true">
+        Categorías
+      </v-btn>
       <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" @click="openCreate">
         Nueva Pregunta
       </v-btn>
@@ -19,11 +22,24 @@
     <v-card rounded="lg" elevation="1" class="mb-4">
       <v-card-text class="pb-3">
         <v-row dense>
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="5">
             <v-text-field
               v-model="search"
               placeholder="Buscar pregunta..."
               prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="compact"
+              rounded="lg"
+              hide-details
+              clearable
+            />
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-select
+              v-model="filterCategory"
+              :items="categoryFilterOptions"
+              placeholder="Todas las categorías"
+              prepend-inner-icon="mdi-shape-outline"
               variant="outlined"
               density="compact"
               rounded="lg"
@@ -68,6 +84,9 @@
             class="rounded"
           />
           <v-icon v-else color="medium-emphasis" title="Pregunta de texto">mdi-format-text</v-icon>
+        </template>
+        <template #item.category_id="{ item }">
+          <v-chip size="small" variant="outlined" prepend-icon="mdi-shape-outline">{{ categoryName(item.category_id) }}</v-chip>
         </template>
         <template #item.level="{ item }">
           <v-chip :color="levelColor(item.level)" size="small" variant="tonal">{{ levelLabel(item.level) }}</v-chip>
@@ -117,6 +136,30 @@
               />
               <p v-if="imageMissing" class="text-caption text-error mb-2">Sube la imagen de la pregunta</p>
             </template>
+
+            <div class="d-flex align-start gap-2">
+              <v-select
+                v-model="form.category_id"
+                :items="categoryOptions"
+                label="Categoría"
+                prepend-inner-icon="mdi-shape-outline"
+                variant="outlined"
+                rounded="lg"
+                :rules="[rules.required]"
+                no-data-text="No hay categorías: crea una con el botón de la derecha"
+                class="flex-1-1"
+              />
+              <v-btn
+                icon="mdi-shape-plus-outline"
+                variant="tonal"
+                color="primary"
+                rounded="lg"
+                height="56"
+                width="56"
+                title="Gestionar categorías"
+                @click="categoryDialog = true"
+              />
+            </div>
 
             <v-textarea
               v-model="form.question_text"
@@ -249,6 +292,7 @@
       <v-card v-if="previewQuestion" rounded="lg">
         <v-card-title class="pt-5 px-6 d-flex align-center gap-2">
           <v-chip :color="levelColor(previewQuestion.level)" size="small" variant="tonal">{{ levelLabel(previewQuestion.level) }}</v-chip>
+          <v-chip size="small" variant="outlined" prepend-icon="mdi-shape-outline">{{ categoryName(previewQuestion.category_id) }}</v-chip>
           Vista previa
         </v-card-title>
         <v-card-text class="px-6">
@@ -289,6 +333,12 @@
       @confirm="deleteQuestion"
       @cancel="confirmDialog = false"
     />
+
+    <CategoryManagerDialog
+      v-model="categoryDialog"
+      :subject-id="subjectId"
+      @changed="onCategoriesChanged"
+    />
   </div>
 </template>
 
@@ -306,8 +356,10 @@ const router = useRouter()
 const subjectId = computed(() => route.params.id as string)
 
 interface AnswerOption { option_text: string; order_index: number }
+interface Category { id: string; name: string; question_count: number }
 interface Question {
   id: string
+  category_id: string
   question_text: string
   level: string
   reward_credits: number
@@ -335,6 +387,21 @@ const previewQuestion = ref<Question | null>(null)
 const formRef = ref()
 const search = ref('')
 const filterLevel = ref<string | null>(null)
+const filterCategory = ref<string | null>(null)
+const categories = ref<Category[]>([])
+const categoryDialog = ref(false)
+
+const categoryOptions = computed(() => categories.value.map((c) => ({ title: c.name, value: c.id })))
+const categoryFilterOptions = computed(() =>
+  categories.value.map((c) => ({ title: `${c.name} (${c.question_count})`, value: c.id })))
+const categoryName = (id?: string) => categories.value.find((c) => c.id === id)?.name ?? 'Sin categoría'
+
+/** Categoría sugerida al crear: la filtrada, o "General", o la primera. */
+const defaultCategoryId = () =>
+  filterCategory.value
+  ?? categories.value.find((c) => c.name.toLowerCase() === 'general')?.id
+  ?? categories.value[0]?.id
+  ?? ''
 
 const levelOptions = [
   { title: 'Básico', value: 'basico' },
@@ -343,6 +410,7 @@ const levelOptions = [
 ]
 
 const defaultForm = () => ({
+  category_id: '',
   question_type: 'text' as 'text' | 'image',
   image_public_id: '',
   question_text: '',
@@ -373,6 +441,7 @@ const cloudinaryUrl = (url: string, transform: string) =>
 const headers = [
   { title: '', key: 'question_type', sortable: false, width: 80 },
   { title: 'Pregunta', key: 'question_text', sortable: false },
+  { title: 'Categoría', key: 'category_id', sortable: true, sortRaw: (a: Question, b: Question) => categoryName(a.category_id).localeCompare(categoryName(b.category_id), 'es') },
   { title: 'Nivel', key: 'level', sortable: true },
   { title: 'Créditos +/-', key: 'reward_credits', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'center' as const },
@@ -393,19 +462,30 @@ const filteredQuestions = computed(() =>
   questions.value.filter((q) => {
     const matchSearch = !search.value || q.question_text.toLowerCase().includes(search.value.toLowerCase())
     const matchLevel = !filterLevel.value || q.level === filterLevel.value
-    return matchSearch && matchLevel
+    const matchCategory = !filterCategory.value || q.category_id === filterCategory.value
+    return matchSearch && matchLevel && matchCategory
   })
 )
+
+function onCategoriesChanged(list: Category[]) {
+  categories.value = list
+  // Si la categoría filtrada se eliminó, quitar el filtro
+  if (filterCategory.value && !list.some((c) => c.id === filterCategory.value)) filterCategory.value = null
+  // Con el formulario abierto y sin categoría elegida, sugerir una
+  if (dialog.value && !form.category_id) form.category_id = defaultCategoryId()
+}
 
 async function loadData() {
   loading.value = true
   try {
-    const [qs, subject] = await Promise.all([
+    const [qs, subject, cats] = await Promise.all([
       api.get<Question[]>(`/subjects/${subjectId.value}/questions`),
       api.get<{ name: string }>(`/subjects/${subjectId.value}`),
+      api.get<Category[]>(`/subjects/${subjectId.value}/categories`),
     ])
     questions.value = qs
     subjectName.value = subject.name
+    categories.value = cats
   } catch (e: any) {
     snackbar.error(e?.message ?? 'Error al cargar preguntas')
   } finally {
@@ -416,7 +496,7 @@ async function loadData() {
 function openCreate() {
   editing.value = false
   selectedQuestion.value = null
-  Object.assign(form, defaultForm())
+  Object.assign(form, defaultForm(), { category_id: defaultCategoryId() })
   sessionUploads.value = []
   imageMissing.value = false
   dialog.value = true
@@ -428,6 +508,7 @@ function openEdit(q: Question) {
   sessionUploads.value = []
   imageMissing.value = false
   Object.assign(form, {
+    category_id: q.category_id ?? defaultCategoryId(),
     question_type: q.question_type ?? 'text',
     image_public_id: q.image_public_id ?? '',
     question_text: q.question_text,
@@ -488,6 +569,7 @@ async function saveQuestion() {
   try {
     const isImage = form.question_type === 'image'
     const payload = {
+      category_id: form.category_id,
       question_type: form.question_type,
       question_text: form.question_text,
       level: form.level,
@@ -531,7 +613,7 @@ async function deleteQuestion() {
     await api.del(`/subjects/${subjectId.value}/questions/${selectedQuestion.value.id}`)
     snackbar.success('Pregunta eliminada')
     confirmDialog.value = false
-    await loadData()
+    await loadData() // también refresca los conteos por categoría
   } catch (e: any) {
     snackbar.error(e?.message ?? 'Error al eliminar pregunta')
   } finally {
