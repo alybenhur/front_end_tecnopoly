@@ -22,7 +22,7 @@
     <v-card rounded="lg" elevation="1" class="mb-4">
       <v-card-text class="pb-3">
         <v-row dense>
-          <v-col cols="12" md="5">
+          <v-col cols="12" md="7">
             <v-text-field
               v-model="search"
               placeholder="Buscar pregunta..."
@@ -34,24 +34,12 @@
               clearable
             />
           </v-col>
-          <v-col cols="12" md="4">
+          <v-col cols="12" md="5">
             <v-select
               v-model="filterCategory"
               :items="categoryFilterOptions"
               placeholder="Todas las categorías"
               prepend-inner-icon="mdi-shape-outline"
-              variant="outlined"
-              density="compact"
-              rounded="lg"
-              hide-details
-              clearable
-            />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="filterLevel"
-              :items="levelOptions"
-              placeholder="Todos los niveles"
               variant="outlined"
               density="compact"
               rounded="lg"
@@ -87,9 +75,6 @@
         </template>
         <template #item.category_id="{ item }">
           <v-chip size="small" variant="outlined" prepend-icon="mdi-shape-outline">{{ categoryName(item.category_id) }}</v-chip>
-        </template>
-        <template #item.level="{ item }">
-          <v-chip :color="levelColor(item.level)" size="small" variant="tonal">{{ levelLabel(item.level) }}</v-chip>
         </template>
         <template #item.reward_credits="{ item }">
           <span class="text-success font-weight-medium">+{{ item.reward_credits }}</span>
@@ -174,17 +159,7 @@
             />
 
             <v-row dense>
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="form.level"
-                  :items="levelOptions"
-                  label="Nivel"
-                  variant="outlined"
-                  rounded="lg"
-                  :rules="[rules.required]"
-                />
-              </v-col>
-              <v-col cols="6" md="4">
+              <v-col cols="6">
                 <v-text-field
                   v-model.number="form.reward_credits"
                   label="Créditos correcta"
@@ -195,7 +170,7 @@
                   prefix="+"
                 />
               </v-col>
-              <v-col cols="6" md="4">
+              <v-col cols="6">
                 <v-text-field
                   v-model.number="form.penalty_credits"
                   label="Penalización"
@@ -291,7 +266,6 @@
     <v-dialog v-model="previewDialog" max-width="560">
       <v-card v-if="previewQuestion" rounded="lg">
         <v-card-title class="pt-5 px-6 d-flex align-center gap-2">
-          <v-chip :color="levelColor(previewQuestion.level)" size="small" variant="tonal">{{ levelLabel(previewQuestion.level) }}</v-chip>
           <v-chip size="small" variant="outlined" prepend-icon="mdi-shape-outline">{{ categoryName(previewQuestion.category_id) }}</v-chip>
           Vista previa
         </v-card-title>
@@ -361,7 +335,6 @@ interface Question {
   id: string
   category_id: string
   question_text: string
-  level: string
   reward_credits: number
   penalty_credits: number
   correct_answer_index: number
@@ -386,7 +359,6 @@ const selectedQuestion = ref<Question | null>(null)
 const previewQuestion = ref<Question | null>(null)
 const formRef = ref()
 const search = ref('')
-const filterLevel = ref<string | null>(null)
 const filterCategory = ref<string | null>(null)
 const categories = ref<Category[]>([])
 const categoryDialog = ref(false)
@@ -403,18 +375,11 @@ const defaultCategoryId = () =>
   ?? categories.value[0]?.id
   ?? ''
 
-const levelOptions = [
-  { title: 'Básico', value: 'basico' },
-  { title: 'Medio', value: 'medio' },
-  { title: 'Avanzado', value: 'avanzado' },
-]
-
 const defaultForm = () => ({
   category_id: '',
   question_type: 'text' as 'text' | 'image',
   image_public_id: '',
   question_text: '',
-  level: '',
   reward_credits: 10,
   penalty_credits: 5,
   correct_answer_index: 0,
@@ -442,7 +407,6 @@ const headers = [
   { title: '', key: 'question_type', sortable: false, width: 80 },
   { title: 'Pregunta', key: 'question_text', sortable: false },
   { title: 'Categoría', key: 'category_id', sortable: true, sortRaw: (a: Question, b: Question) => categoryName(a.category_id).localeCompare(categoryName(b.category_id), 'es') },
-  { title: 'Nivel', key: 'level', sortable: true },
   { title: 'Créditos +/-', key: 'reward_credits', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'center' as const },
 ]
@@ -452,18 +416,11 @@ const rules = {
   minLen: (n: number) => (v: string) => (v && v.length >= n) || `Mínimo ${n} caracteres`,
 }
 
-const levelColor = (level: string) =>
-  level === 'basico' ? 'success' : level === 'medio' ? 'warning' : 'error'
-
-const levelLabel = (level: string) =>
-  level === 'basico' ? 'Básico' : level === 'medio' ? 'Medio' : 'Avanzado'
-
 const filteredQuestions = computed(() =>
   questions.value.filter((q) => {
     const matchSearch = !search.value || q.question_text.toLowerCase().includes(search.value.toLowerCase())
-    const matchLevel = !filterLevel.value || q.level === filterLevel.value
     const matchCategory = !filterCategory.value || q.category_id === filterCategory.value
-    return matchSearch && matchLevel && matchCategory
+    return matchSearch && matchCategory
   })
 )
 
@@ -512,7 +469,6 @@ function openEdit(q: Question) {
     question_type: q.question_type ?? 'text',
     image_public_id: q.image_public_id ?? '',
     question_text: q.question_text,
-    level: q.level,
     reward_credits: q.reward_credits,
     penalty_credits: q.penalty_credits,
     correct_answer_index: q.correct_answer_index,
@@ -572,7 +528,6 @@ async function saveQuestion() {
       category_id: form.category_id,
       question_type: form.question_type,
       question_text: form.question_text,
-      level: form.level,
       reward_credits: form.reward_credits,
       penalty_credits: form.penalty_credits,
       correct_answer_index: form.correct_answer_index,
