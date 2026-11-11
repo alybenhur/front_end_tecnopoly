@@ -185,6 +185,15 @@ async function handleLogin() {
   padding: 48px clamp(16px, 5vw, 80px);
 }
 
+/* En pantallas anchas el control se centra en la zona libre de la imagen
+   (el ~62 % izquierdo), sin tapar al personaje de la derecha. */
+@media (min-width: 1100px) {
+  .login-layout {
+    justify-content: center;
+    padding-right: 38vw;
+  }
+}
+
 /* ── Cuerpo del control ─────────────────────────────── */
 .pad {
   --pad-bg: #dde8f6;
