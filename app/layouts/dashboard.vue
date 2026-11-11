@@ -7,6 +7,7 @@
       :permanent="!mobile"
       :temporary="mobile"
       width="268"
+      theme="dark"
       class="panel-drawer"
     >
       <!-- Marca -->
@@ -30,7 +31,7 @@
           :title="item.title"
           :to="item.to"
           :exact="item.to === '/dashboard'"
-          color="primary"
+          color="white"
           rounded="lg"
           class="nav-item mb-1"
         />
@@ -48,7 +49,7 @@
 
         <!-- Usuario -->
         <div class="user-block" :class="{ 'user-block--rail': rail && !mobile }">
-          <v-avatar color="primary" size="38" class="user-avatar">
+          <v-avatar color="#f5c518" size="38" class="user-avatar text-grey-darken-4">
             <span class="text-caption font-weight-bold">{{ initials(authStore.user?.name) }}</span>
           </v-avatar>
           <div v-if="!rail || mobile" class="user-info">
@@ -60,7 +61,7 @@
             icon="mdi-logout"
             variant="text"
             size="small"
-            color="grey-darken-1"
+            color="rgba(255,255,255,0.75)"
             title="Cerrar sesión"
             @click="handleLogout"
           />
@@ -165,8 +166,26 @@ async function handleLogout() {
 </script>
 
 <style scoped>
+/* Degradado con los colores del juego: cielo/interfaz azul arriba y el
+   pasto verde del tablero abajo. */
 .panel-drawer {
-  border-right: 1px solid var(--tp-line) !important;
+  border-right: none !important;
+  background:
+    radial-gradient(120% 60% at 0% 0%, rgba(66, 165, 245, 0.35), transparent 60%),
+    linear-gradient(180deg, #0b2a5b 0%, #1252a8 45%, #1565c0 62%, #1f7a4d 88%, #2e9d3a 100%) !important;
+  color: #fff;
+}
+/* Franja superior con los colores de las casillas del tablero. */
+.panel-drawer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 2;
+  background: linear-gradient(90deg,
+    #e53935 0 25%, #f5c518 25% 50%, #43a047 50% 75%, #42a5f5 75% 100%);
 }
 
 .brand {
@@ -175,7 +194,7 @@ async function handleLogout() {
   gap: 12px;
   height: 68px;
   padding: 0 20px;
-  border-bottom: 1px solid var(--tp-line);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 .brand--rail {
   padding: 0;
@@ -188,18 +207,18 @@ async function handleLogout() {
   border-radius: 11px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #1565c0, #42a5f5);
-  box-shadow: 0 6px 14px rgba(21, 101, 192, 0.3);
+  background: linear-gradient(135deg, #e53935, #ff7043);
+  box-shadow: 0 6px 14px rgba(229, 57, 53, 0.45);
 }
 .brand-name {
   font-weight: 800;
   font-size: 1.05rem;
-  color: var(--tp-ink);
+  color: #fff;
   line-height: 1.1;
 }
 .brand-role {
   font-size: 0.75rem;
-  color: var(--tp-muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .nav-label {
@@ -208,22 +227,37 @@ async function handleLogout() {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.5);
 }
 .nav-item :deep(.v-list-item-title) {
   font-weight: 600;
   font-size: 0.92rem;
 }
+.nav-item:not(.v-list-item--active) {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
 .nav-item:not(.v-list-item--active) :deep(.v-list-item__prepend .v-icon) {
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.7);
   opacity: 1;
+}
+.nav-item.v-list-item--active {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 3px 0 0 #f5c518;
+}
+.nav-item.v-list-item--active :deep(.v-list-item__overlay) {
+  opacity: 0;
+}
+.nav-item.v-list-item--active :deep(.v-list-item__prepend .v-icon) {
+  color: #f5c518;
 }
 
 .game-card {
   margin: 0 14px 14px;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(160deg, #0b2a5b, #1565c0);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
   color: #fff;
 }
 .game-card-img {
@@ -252,7 +286,8 @@ async function handleLogout() {
   align-items: center;
   gap: 10px;
   padding: 14px 14px 14px 18px;
-  border-top: 1px solid var(--tp-line);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.12);
 }
 .user-block--rail {
   justify-content: center;
@@ -268,14 +303,14 @@ async function handleLogout() {
 .user-name {
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--tp-ink);
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .user-mail {
   font-size: 0.72rem;
-  color: var(--tp-muted);
+  color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
