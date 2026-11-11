@@ -35,8 +35,8 @@
     <v-row v-else>
       <v-col v-for="subject in filtered" :key="subject.id" cols="12" sm="6" lg="4">
         <v-card class="subject-card h-100 d-flex flex-column" @click="goToQuestions(subject.id)">
-          <div class="cover" :style="{ '--tile': casillaFor(subject.id).color }">
-            <img :src="casillaFor(subject.id).src" alt="" class="cover-tile">
+          <div class="cover" :style="{ '--tile': subjectArt(subject.name, subject.description).color }">
+            <SubjectArt :name="subject.name" :description="subject.description" :size="104" class="cover-tile" />
             <v-chip v-if="subject.grade" size="small" class="cover-chip" prepend-icon="mdi-school">
               Grado {{ subject.grade.name }}
             </v-chip>
@@ -72,7 +72,7 @@
 import { useApi } from '~/composables/useApi'
 import { useAuthStore } from '~/stores/auth'
 import { useSnackbarStore } from '~/stores/snackbar'
-import { casillaFor } from '~/composables/useGameArt'
+import { subjectArt } from '~/composables/useGameArt'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 

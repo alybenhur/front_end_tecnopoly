@@ -68,9 +68,7 @@
       <v-row>
         <v-col v-for="s in mySubjects.slice(0, 3)" :key="s.id" cols="12" sm="6" lg="4">
           <v-card :to="`/dashboard/subjects/${s.id}/questions`" class="mini-subject h-100">
-            <div class="mini-art" :style="{ background: casillaFor(s.id).color }">
-              <img :src="casillaFor(s.id).src" alt="">
-            </div>
+            <SubjectArt :name="s.name" :description="s.description" :size="56" />
             <div class="min-w-0">
               <div class="action-title text-truncate">{{ s.name }}</div>
               <div class="action-text">{{ s.grade?.name ? `Grado ${s.grade.name}` : 'Sin grado' }}</div>
@@ -85,7 +83,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 import { useApi } from '~/composables/useApi'
-import { casillaFor } from '~/composables/useGameArt'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
@@ -288,18 +285,6 @@ onMounted(async () => {
 }
 .action-arrow {
   flex: none;
-}
-.mini-art {
-  flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  overflow: hidden;
-}
-.mini-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 @media (max-width: 700px) {
