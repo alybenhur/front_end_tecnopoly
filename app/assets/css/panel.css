@@ -1,0 +1,48 @@
+/* Estilos compartidos del panel de Tecnopoly */
+:root {
+  --tp-ink: #0f172a;
+  --tp-muted: #64748b;
+  --tp-line: #e6eaf2;
+  --tp-bg: #f4f6fb;
+  --tp-blue: #1565c0;
+  --tp-blue-dark: #0b2a5b;
+}
+
+body {
+  font-feature-settings: 'tnum';
+}
+
+/* Encabezado de cada página */
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--tp-ink);
+  letter-spacing: -0.01em;
+}
+.page-subtitle {
+  margin-top: 4px;
+  font-size: 0.92rem;
+  color: var(--tp-muted);
+}
+
+/* Bordes suaves en tarjetas planas */
+.v-card--border {
+  border-color: var(--tp-line) !important;
+}
+
+/* Tablas: encabezado discreto */
+.v-data-table .v-data-table__th {
+  background: #f8fafc !important;
+  color: var(--tp-muted) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Diálogos y menús: sombra para separarlos del fondo */
+.v-overlay__content > .v-card {
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22) !important;
+  border: none !important;
+}

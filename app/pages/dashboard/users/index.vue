@@ -3,8 +3,8 @@
     <!-- Header -->
     <div class="d-flex align-center justify-space-between mb-6">
       <div>
-        <h1 class="text-h5 font-weight-bold text-primary">Usuarios</h1>
-        <p class="text-medium-emphasis text-body-2 mt-1">Gestión de administradores y profesores</p>
+        <h1 class="page-title">Usuarios</h1>
+        <p class="page-subtitle">Gestión de administradores y profesores</p>
       </div>
       <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" @click="openCreate">
         Nuevo Usuario
@@ -12,7 +12,7 @@
     </div>
 
     <!-- Filters -->
-    <v-card rounded="lg" elevation="1" class="mb-4">
+    <v-card class="mb-4">
       <v-card-text class="pb-3">
         <v-row dense>
           <v-col cols="12" md="6">
@@ -44,7 +44,7 @@
     </v-card>
 
     <!-- Table -->
-    <v-card rounded="lg" elevation="1">
+    <v-card>
       <v-data-table
         :headers="headers"
         :items="filteredUsers"

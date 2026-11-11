@@ -2,15 +2,15 @@
   <div>
     <div class="d-flex align-center justify-space-between mb-6">
       <div>
-        <h1 class="text-h5 font-weight-bold text-primary">Grados</h1>
-        <p class="text-medium-emphasis text-body-2 mt-1">Gestión de grados escolares</p>
+        <h1 class="page-title">Grados</h1>
+        <p class="page-subtitle">Gestión de grados escolares</p>
       </div>
       <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" @click="openCreate">
         Nuevo Grado
       </v-btn>
     </div>
 
-    <v-card rounded="lg" elevation="1" class="mb-4">
+    <v-card class="mb-4">
       <v-card-text class="pb-3">
         <v-text-field
           v-model="search"
@@ -26,7 +26,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card rounded="lg" elevation="1">
+    <v-card>
       <v-data-table
         :headers="headers"
         :items="filteredGrades"

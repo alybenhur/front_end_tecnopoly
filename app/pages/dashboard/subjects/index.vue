@@ -2,15 +2,15 @@
   <div>
     <div class="d-flex align-center justify-space-between mb-6">
       <div>
-        <h1 class="text-h5 font-weight-bold text-primary">Materias</h1>
-        <p class="text-medium-emphasis text-body-2 mt-1">Gestión de materias y asignación de profesores</p>
+        <h1 class="page-title">Materias</h1>
+        <p class="page-subtitle">Gestión de materias y asignación de profesores</p>
       </div>
       <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" @click="openCreate">
         Nueva Materia
       </v-btn>
     </div>
 
-    <v-card rounded="lg" elevation="1" class="mb-4">
+    <v-card class="mb-4">
       <v-card-text class="pb-3">
         <v-row dense>
           <v-col cols="12" md="6">
@@ -41,7 +41,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card rounded="lg" elevation="1">
+    <v-card>
       <v-data-table
         :headers="headers"
         :items="filteredSubjects"

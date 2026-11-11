@@ -4,10 +4,10 @@
     <div class="d-flex align-center gap-3 mb-2">
       <v-btn icon="mdi-arrow-left" variant="text" color="primary" @click="router.back()" />
       <div>
-        <h1 class="text-h5 font-weight-bold text-primary">
+        <h1 class="page-title">
           Preguntas — {{ subjectName }}
         </h1>
-        <p class="text-medium-emphasis text-body-2 mt-1">Banco de preguntas de la materia</p>
+        <p class="page-subtitle">Banco de preguntas de la materia</p>
       </div>
       <v-spacer />
       <v-btn variant="tonal" color="primary" prepend-icon="mdi-shape-outline" rounded="lg" class="mr-2" @click="categoryDialog = true">
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Filters -->
-    <v-card rounded="lg" elevation="1" class="mb-4">
+    <v-card class="mb-4">
       <v-card-text class="pb-3">
         <v-row dense>
           <v-col cols="12" md="7">
@@ -52,7 +52,7 @@
     </v-card>
 
     <!-- Table -->
-    <v-card rounded="lg" elevation="1">
+    <v-card>
       <v-data-table
         :headers="headers"
         :items="filteredQuestions"

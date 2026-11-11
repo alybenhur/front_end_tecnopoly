@@ -1,5 +1,6 @@
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
+import '~/assets/css/panel.css'
 import { createVuetify } from 'vuetify'
 import { es } from 'vuetify/locale'
 
@@ -9,12 +10,19 @@ export default defineNuxtPlugin((app) => {
       locale: 'es',
       messages: { es },
     },
+    defaults: {
+      VCard: { rounded: 'xl', elevation: 0, border: true },
+      VBtn: { style: 'text-transform: none; letter-spacing: 0;', class: 'font-weight-bold' },
+      VDataTable: { hover: true },
+    },
     theme: {
       defaultTheme: 'light',
       themes: {
         light: {
           colors: {
             primary: '#1565C0',
+            background: '#F4F6FB',
+            surface: '#FFFFFF',
             secondary: '#42A5F5',
             accent: '#FF6F00',
             error: '#D32F2F',
